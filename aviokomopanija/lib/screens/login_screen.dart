@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/booking'),
         builder: (_) => AuthService.currentUser?['role'] == 'admin'
             ? const AdminScreen()
             : const HomeScreen(),

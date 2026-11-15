@@ -73,7 +73,10 @@ class WelcomeScreen extends StatelessWidget {
                   AuthService.logout();
                   Navigator.push(
                     context,
-                    MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+                    MaterialPageRoute<void>(
+                      settings: const RouteSettings(name: '/booking'),
+                      builder: (_) => const HomeScreen(),
+                    ),
                   );
                 },
                 child: const Text('Nastavi kao gost'),

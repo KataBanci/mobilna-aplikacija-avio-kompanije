@@ -63,6 +63,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Administracija'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Odjavi se'), 150);
+    await tester.ensureVisible(find.text('Odjavi se'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Odjavi se'));
     await tester.pumpAndSettle();
     expect(find.text('Nastavi kao gost'), findsOneWidget);
