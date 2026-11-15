@@ -24,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Zatvori'),
           ),
         ],
       ),
@@ -34,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = AuthService.currentUser;
-    final name = user?['name'] ?? 'Guest';
+    final name = user?['name'] ?? 'Gost';
     final initials = name
         .split(' ')
         .where((part) => part.isNotEmpty)
@@ -43,20 +43,20 @@ class ProfileScreen extends StatelessWidget {
         .join()
         .toUpperCase();
     final menu = [
-      ('Personal details', Icons.person_outline),
-      ('Saved travelers', Icons.people_outline),
-      ('Payment methods', Icons.credit_card_outlined),
-      ('Loyalty program', Icons.shield_outlined),
-      ('Notifications', Icons.notifications_none_rounded),
-      ('Help center', Icons.help_outline),
-      (user == null ? 'Sign in' : 'Log out', Icons.logout),
+      ('Lični podaci', Icons.person_outline),
+      ('Sačuvani putnici', Icons.people_outline),
+      ('Načini plaćanja', Icons.credit_card_outlined),
+      ('Program lojalnosti', Icons.shield_outlined),
+      ('Obaveštenja', Icons.notifications_none_rounded),
+      ('Centar za pomoć', Icons.help_outline),
+      (user == null ? 'Prijava' : 'Odjavi se', Icons.logout),
     ];
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.lightScaffoldColor,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          tooltip: 'Back',
+          tooltip: 'Nazad',
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
@@ -78,12 +78,12 @@ class ProfileScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Settings',
+            tooltip: 'Podešavanja',
             icon: const Icon(Icons.settings_outlined, size: 26),
             onPressed: () => showDetails(
               context,
-              'Settings',
-              'Settings are not available yet.',
+              'Podešavanja',
+              'Podešavanja još nisu dostupna.',
             ),
           ),
           const SizedBox(width: 12),
@@ -98,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Profile',
+                'Profil',
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 34,
@@ -146,7 +146,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          user?['email'] ?? 'Sign in to your account',
+                          user?['email'] ?? 'Prijavi se na svoj nalog',
                           style: const TextStyle(
                             color: Color(0xFF7D827D),
                             fontSize: 13,
@@ -201,16 +201,16 @@ class ProfileScreen extends StatelessWidget {
                           } else if (index == 0) {
                             showDetails(
                               context,
-                              'Personal details',
+                              'Lični podaci',
                               user == null
-                                  ? 'Sign in to view your details.'
+                                  ? 'Prijavi se da vidiš svoje podatke.'
                                   : '$name\n${user['email']}',
                             );
                           } else {
                             showDetails(
                               context,
                               menu[index].$1,
-                              'This feature is not available yet.',
+                              'Ova funkcionalnost još nije dostupna.',
                             );
                           }
                         },
@@ -246,25 +246,25 @@ class ProfileScreen extends StatelessWidget {
             if (index == 1 || index == 2) {
               showDetails(
                 context,
-                index == 1 ? 'Search' : 'Trips',
-                'This feature is not available yet.',
+                index == 1 ? 'Pretraga' : 'Putovanja',
+                'Ova funkcionalnost još nije dostupna.',
               );
             }
           },
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
-              label: 'Explore',
+              label: 'Početna',
             ),
-            NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
+            NavigationDestination(icon: Icon(Icons.search), label: 'Pretraga'),
             NavigationDestination(
               icon: Icon(Icons.confirmation_number_outlined),
-              label: 'Trips',
+              label: 'Putovanja',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person, color: AppColors.lightPrimary),
-              label: 'Profile',
+              label: 'Profil',
             ),
           ],
         ),

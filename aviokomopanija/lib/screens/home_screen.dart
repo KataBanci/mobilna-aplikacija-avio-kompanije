@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:aviokomopanija/consts/app_colors.dart';
 import 'package:aviokomopanija/screens/profile_screen.dart';
 
+import '../models/city.dart';
+import 'cities_screen.dart';
+
 // Prva vizuelna verzija: podaci su primeri, bez baze i rezervacija.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -108,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 30),
                         const Text(
-                          'YOUR NEXT CHAPTER\nSTARTS HERE',
+                          'TVOJE NOVO PUTOVANJE\nPOČINJE OVDE',
                           style: TextStyle(
                             fontSize: 9,
                             height: 1.8,
@@ -118,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 10),
                         const Text(
-                          'Where to,\nnext?',
+                          'Kuda putujemo\nsledeće?',
                           style: TextStyle(
                             fontFamily: 'serif',
                             fontSize: 44,
@@ -130,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Find a little more sky\nin your day.',
+                          'Dodaj malo neba\nsvom danu.',
                           style: TextStyle(
                             color: Color(0xFF717673),
                             height: 1.5,
@@ -155,12 +158,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Row(
                                 children: [
-                                  tripButton('Round trip', Icons.flight, 0),
+                                  tripButton('Povratni', Icons.flight, 0),
                                   const SizedBox(width: 3),
-                                  tripButton('One way', Icons.sync_alt, 1),
+                                  tripButton('Jedan smer', Icons.sync_alt, 1),
                                   const SizedBox(width: 3),
                                   tripButton(
-                                    'Multi-city',
+                                    'Više gradova',
                                     Icons.location_on_outlined,
                                     2,
                                   ),
@@ -174,18 +177,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       Expanded(
                                         child: SearchField(
-                                          label: 'From',
+                                          label: 'Odakle',
                                           value: 'BEG',
-                                          subtitle: 'Belgrade',
+                                          subtitle: 'Beograd',
                                           icon: Icons.flight_takeoff,
                                         ),
                                       ),
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: SearchField(
-                                          label: 'To',
+                                          label: 'Dokle',
                                           value: 'FCO',
-                                          subtitle: 'Rome',
+                                          subtitle: 'Rim',
                                           icon: Icons.flight_land,
                                         ),
                                       ),
@@ -216,8 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Expanded(
                                     child: SearchField(
-                                      label: 'Departure',
-                                      value: 'Select date',
+                                      label: 'Polazak',
+                                      value: 'Izaberi datum',
                                       icon: Icons.calendar_month_outlined,
                                       compact: true,
                                     ),
@@ -225,8 +228,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   SizedBox(width: 8),
                                   Expanded(
                                     child: SearchField(
-                                      label: 'Travelers',
-                                      value: '1 traveler',
+                                      label: 'Putnici',
+                                      value: '1 putnik',
                                       icon: Icons.person_outline,
                                       compact: true,
                                     ),
@@ -250,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Icon(Icons.search, size: 22),
                                       SizedBox(width: 16),
                                       Text(
-                                        'Search flights',
+                                        'Pretraži letove',
                                         style: TextStyle(fontSize: 14),
                                       ),
                                       SizedBox(width: 8),
@@ -277,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Popular destinations',
+                          'Popularne destinacije',
                           style: TextStyle(
                             fontFamily: 'serif',
                             fontSize: 23,
@@ -287,20 +290,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: showPreviewMessage,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/destinations'),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.only(left: 8),
                           minimumSize: const Size(0, 36),
                         ),
                         child: const Text(
-                          'View all →',
+                          'Vidi sve →',
                           style: TextStyle(fontSize: 11),
                         ),
                       ),
                     ],
                   ),
                   const Text(
-                    'Places worth looking up to.',
+                    'Pronađi inspiraciju za sledeće putovanje.',
                     style: TextStyle(color: Color(0xFF777C78), fontSize: 12),
                   ),
                   const SizedBox(height: 12),
@@ -309,25 +313,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                         child: DestinationWidget(
-                          city: 'Rome',
+                          city: 'Rim',
                           price: '89',
-                          image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=85',
+                          image: 'assets/images/rome.jpg',
                         ),
                       ),
                       SizedBox(width: 8),
                       Expanded(
                         child: DestinationWidget(
-                          city: 'Paris',
+                          city: 'Pariz',
                           price: '99',
-                          image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=85',
+                          image: 'assets/images/Paris.jpg',
                         ),
                       ),
                       SizedBox(width: 8),
                       Expanded(
                         child: DestinationWidget(
-                          city: 'Barcelona',
+                          city: 'Barselona',
                           price: '79',
-                          image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=400&q=85',
+                          image: 'assets/images/barcelona.jpg',
                         ),
                       ),
                     ],
@@ -360,16 +364,16 @@ class _HomeScreenState extends State<HomeScreen> {
               Icons.home_filled,
               color: AppColors.lightPrimary,
             ),
-            label: 'Explore',
+            label: 'Početna',
           ),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
+          NavigationDestination(icon: Icon(Icons.search), label: 'Pretraga'),
           NavigationDestination(
             icon: Icon(Icons.confirmation_number_outlined),
-            label: 'Trips',
+            label: 'Putovanja',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            label: 'Profil',
           ),
         ],
       ),
@@ -488,64 +492,74 @@ class DestinationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: SizedBox(
-        height: 128,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            TravelImage(url: image),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xCC15201B)],
-                  stops: [0.35, 1],
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => CityDetailsScreen(
+            city: cities.firstWhere((item) => item.name == city),
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 128,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              TravelImage(url: image),
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xCC15201B)],
+                    stops: [0.35, 1],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 9,
-              right: 6,
-              bottom: 9,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    city,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'from €$price',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+              Positioned(
+                left: 9,
+                right: 6,
+                bottom: 9,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      city,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'od €$price',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
-                      ),
-                      const CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.arrow_forward,
-                          color: AppColors.textColor,
-                          size: 16,
+                        const CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.arrow_forward,
+                            color: AppColors.textColor,
+                            size: 16,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -558,6 +572,16 @@ class TravelImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, error, stack) => const ColoredBox(
+          color: Color(0xFFDCE5DE),
+          child: Center(child: Icon(Icons.landscape_outlined)),
+        ),
+      );
+    }
     return Image.network(
       url,
       fit: BoxFit.cover,

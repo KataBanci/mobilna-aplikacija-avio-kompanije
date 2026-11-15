@@ -47,11 +47,11 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), 'probna123');
     await tester.tap(find.widgetWithText(FilledButton, 'Prijavi se'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Profile'));
+    await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
     expect(find.text('Test Putnik'), findsOneWidget);
-    await tester.ensureVisible(find.text('Log out'));
-    await tester.tap(find.text('Log out'));
+    await tester.ensureVisible(find.text('Odjavi se'));
+    await tester.tap(find.text('Odjavi se'));
     await tester.pumpAndSettle();
     expect(find.text('Nastavi kao gost'), findsOneWidget);
     await tester.ensureVisible(find.text('Administratorska prijava'));
