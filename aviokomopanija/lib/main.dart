@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:aviokomopanija/consts/app_colors.dart';
-import 'package:aviokomopanija/screens/home_screen.dart';
+import 'package:aviokomopanija/screens/welcome_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

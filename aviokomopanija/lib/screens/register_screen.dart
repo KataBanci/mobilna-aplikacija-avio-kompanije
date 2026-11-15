@@ -1,0 +1,170 @@
+import 'package:flutter/material.dart';
+import 'package:aviokomopanija/screens/login_screen.dart';
+import 'package:aviokomopanija/services/auth_service.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final formKey = GlobalKey<FormState>();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmController = TextEditingController();
+  bool hidePassword = true;
+  String? error;
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
+
+  void register() {
+    if (!formKey.currentState!.validate()) return;
+    final result = AuthService.register(
+      nameController.text,
+      emailController.text,
+      passwordController.text,
+    );
+    if (result != null) {
+      setState(() => error = result);
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Demo nalog je kreiran. Sada se prijavi.')),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Registracija')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Tvoje putovanje počinje ovde.',
+                  style: TextStyle(fontFamily: 'serif', fontSize: 30),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Demo nalog se briše restartom aplikacije. Koristi probni imejl i lozinku.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Ime i prezime',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Unesi ime.'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Imejl',
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                              .hasMatch(value.trim())
+                      ? 'Unesi ispravan imejl.'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: hidePassword,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    labelText: 'Lozinka',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      tooltip: hidePassword
+                          ? 'Prikaži lozinku'
+                          : 'Sakrij lozinku',
+                      onPressed: () =>
+                          setState(() => hidePassword = !hidePassword),
+                      icon: Icon(
+                        hidePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
+                  ),
+                  validator: (value) => value == null || value.length < 6
+                      ? 'Unesi najmanje 6 znakova.'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: confirmController,
+                  obscureText: hidePassword,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Potvrda lozinke',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: (value) => value != passwordController.text
+                      ? 'Lozinke se ne podudaraju.'
+                      : null,
+                  onFieldSubmitted: (_) => register(),
+                ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: register,
+                  child: const Text('Registruj se'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                  ),
+                  child: const Text('Već imaš nalog? Prijavi se'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

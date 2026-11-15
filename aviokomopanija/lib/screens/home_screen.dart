@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:aviokomopanija/consts/app_colors.dart';
+import 'package:aviokomopanija/screens/profile_screen.dart';
 
 // Prva vizuelna verzija: podaci su primeri, bez baze i rezervacija.
 class HomeScreen extends StatefulWidget {
@@ -343,7 +344,14 @@ class _HomeScreenState extends State<HomeScreen> {
         indicatorColor: Colors.transparent,
         selectedIndex: 0,
         onDestinationSelected: (index) {
-          if (index != 0) showPreviewMessage();
+          if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+            );
+          } else if (index != 0) {
+            showPreviewMessage();
+          }
         },
         destinations: const [
           NavigationDestination(
