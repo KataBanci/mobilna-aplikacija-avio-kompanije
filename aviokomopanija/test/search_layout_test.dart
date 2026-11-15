@@ -28,6 +28,7 @@ void main() {
       );
       expect(origin.overlaps(destination), isFalse);
       expect(origin.top, destination.top);
+      await t.ensureVisible(find.byTooltip('Zameni polazište i odredište'));
       await t.tap(find.byTooltip('Zameni polazište i odredište'));
       await t.pumpAndSettle();
       expect(b.origin, 'Rim (FCO)');

@@ -28,6 +28,12 @@ void main() {
     await t.ensureVisible(find.text('Nastavi kao gost'));
     await t.tap(find.text('Nastavi kao gost'));
     await t.pumpAndSettle();
+    expect(find.text('Popularne destinacije'), findsOneWidget);
+    expect(find.text('Polazište'), findsNothing);
+    await t.tap(find.text('Pronađi avionsku kartu'));
+    await t.pumpAndSettle();
+    expect(find.text('Popularne destinacije'), findsNothing);
+    expect(find.text('Pronađite svoj let'), findsOneWidget);
     await t.ensureVisible(find.text('Pretraži letove'));
     await t.tap(find.text('Pretraži letove'));
     await t.pumpAndSettle();

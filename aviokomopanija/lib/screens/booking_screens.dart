@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/booking.dart';
+import '../models/city.dart';
+import 'cities_screen.dart';
 import '../services/calendar_service.dart';
+import '../services/notification_service.dart';
+import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 const green = Color(0xFF244638);
@@ -114,7 +118,7 @@ class _BookingHomeState extends State<BookingHome> {
                 ? const ProfileScreen()
                 : tab == 2
                 ? TripsScreen(b: b)
-                : SearchScreen(b: b, key: ValueKey(tab)),
+                : SearchScreen(b: b, explore: tab == 0, key: ValueKey(tab)),
           ),
         ),
       ),
@@ -252,7 +256,8 @@ class BookingPage extends StatelessWidget {
 
 class SearchScreen extends StatefulWidget {
   final Booking b;
-  const SearchScreen({super.key, required this.b});
+  final bool explore;
+  const SearchScreen({super.key, required this.b, this.explore = false});
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -580,302 +585,326 @@ class _SearchScreenState extends State<SearchScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/plane-hero.jpg.jpg',
-                fit: BoxFit.cover,
-                alignment: Alignment.centerRight,
-              ),
-            ),
-            const Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [cream, Color(0xE6FAFAF8), Color(0x30FAFAF8)],
-                    stops: [0, 0.4, 1],
-                  ),
-                ),
-              ),
-            ),
-            const Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x00FAFAF8), Color(0x00FAFAF8), cream],
-                    stops: [0, 0.65, 1],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.near_me, color: green, size: 25),
-                      SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          'AirVista',
-                          style: TextStyle(
-                            fontSize: 23,
-                            fontFamily: 'AirVistaSerif',
-                            fontWeight: FontWeight.w600,
-                            color: green,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'VAŠE SLEDEĆE\nPOGLAVLJE POČINJE OVDE',
-                    style: TextStyle(
-                      fontSize: 9,
-                      letterSpacing: 1.8,
-                      height: 1.6,
-                      color: green,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Gde želite\nda putujete?',
-                    style: TextStyle(
-                      fontFamily: 'AirVistaSerif',
-                      fontSize: 36,
-                      fontWeight: FontWeight.w600,
-                      height: 1.02,
-                      color: Color(0xFF17241F),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Pronađite malo neba\nu svom danu.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                      color: Color(0xFF59655E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: panel(
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        if (!widget.explore)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F3EE),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Row(
-                    children: [
-                      for (final round in [false, true])
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: round ? 0 : 4),
-                            child: Material(
-                              color: b.roundTrip == round
-                                  ? green
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: () {
-                                  setState(() => b.roundTrip = round);
-                                  b.update();
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 12,
-                                  ),
-                                  child: Text(
-                                    round ? 'Povratno' : 'U jednom pravcu',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: b.roundTrip == round
-                                          ? Colors.white
-                                          : muted,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: airportTile(true)),
-                    SizedBox(
-                      width: 36,
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 44,
-                        ),
-                        tooltip: 'Zameni polazište i odredište',
-                        onPressed: () {
-                          setState(() {
-                            final old = b.origin;
-                            b.origin = b.destination;
-                            b.destination = old;
-                          });
-                          b.update();
-                        },
-                        icon: const Icon(
-                          Icons.swap_horiz,
-                          size: 22,
-                          color: green,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: airportTile(false)),
+                    Expanded(child: heading('Pronađite svoj let')),
+                    const NotificationBell(),
                   ],
                 ),
-                const SizedBox(height: 10),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: searchField(
-                          'Polazak',
-                          b.dateLabel,
-                          Icons.calendar_today_outlined,
-                          () => pickDate(false),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: searchField(
-                          'Putnici i klasa',
-                          '${b.count} ${b.count == 1 ? 'putnik' : 'putnika'}',
-                          Icons.person_outline,
-                          choosePassengers,
-                          subtitle: b.cabin,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (b.roundTrip) ...[
-                  const SizedBox(height: 10),
-                  searchField(
-                    'Povratak',
-                    b.returnDate == null
-                        ? 'Izaberite datum'
-                        : '${b.returnDate!.day}.${b.returnDate!.month}.${b.returnDate!.year}.',
-                    Icons.event_outlined,
-                    () => pickDate(true),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                SizedBox(
-                  height: 48,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      if (b.origin == b.destination) {
-                        message(
-                          context,
-                          'Izaberite različito polazište i odredište.',
-                        );
-                        return;
-                      }
-                      if (b.roundTrip && b.returnDate == null) {
-                        message(context, 'Izaberite datum povratka.');
-                        return;
-                      }
-                      b.reference = null;
-                      open(context, ResultsScreen(b: b));
-                    },
-                    icon: const Icon(Icons.search, size: 19),
-                    label: const Text(
-                      'Pretraži letove',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
+                const Text(
+                  'Izaberite rutu, datum i putnike, pa pronađite kartu za svoje putovanje.',
+                  style: TextStyle(color: muted, height: 1.5),
                 ),
               ],
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        if (widget.explore)
+          Stack(
             children: [
-              const Text(
-                'Popularne destinacije',
-                style: TextStyle(
-                  fontFamily: 'AirVistaSerif',
-                  fontSize: 23,
-                  fontWeight: FontWeight.w600,
-                  color: green,
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/plane-hero.jpg.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
                 ),
               ),
-              const SizedBox(height: 14),
-              SizedBox(
-                height: 190,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    destination('Rim', 'Italija', 'rome.jpg', 'Rim (FCO)'),
-                    destination(
-                      'Pariz',
-                      'Francuska',
-                      'Paris.jpg',
-                      'Pariz (CDG)',
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [cream, Color(0xE6FAFAF8), Color(0x30FAFAF8)],
+                      stops: [0, 0.4, 1],
                     ),
-                    destination(
-                      'London',
-                      'Velika Britanija',
-                      'london.jpg',
-                      'London (LHR)',
+                  ),
+                ),
+              ),
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x00FAFAF8), Color(0x00FAFAF8), cream],
+                      stops: [0, 0.65, 1],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.near_me, color: green, size: 25),
+                        const SizedBox(width: 7),
+                        const Expanded(
+                          child: Text(
+                            'AirVista',
+                            style: TextStyle(
+                              fontSize: 23,
+                              fontFamily: 'AirVistaSerif',
+                              fontWeight: FontWeight.w600,
+                              color: green,
+                            ),
+                          ),
+                        ),
+                        const NotificationBell(),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'VAŠE SLEDEĆE\nPOGLAVLJE POČINJE OVDE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 1.8,
+                        height: 1.6,
+                        color: green,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Gde želite\nda putujete?',
+                      style: TextStyle(
+                        fontFamily: 'AirVistaSerif',
+                        fontSize: 36,
+                        fontWeight: FontWeight.w600,
+                        height: 1.02,
+                        color: Color(0xFF17241F),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Pronađite malo neba\nu svom danu.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        color: Color(0xFF59655E),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ),
+        if (widget.explore)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+            child: action('Pronađi avionsku kartu', () {
+              b.tab = 1;
+              b.update();
+            }),
+          ),
+        if (!widget.explore)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: panel(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F3EE),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Row(
+                      children: [
+                        for (final round in [false, true])
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: round ? 0 : 4),
+                              child: Material(
+                                color: b.roundTrip == round
+                                    ? green
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    setState(() => b.roundTrip = round);
+                                    b.update();
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 12,
+                                    ),
+                                    child: Text(
+                                      round ? 'Povratno' : 'U jednom pravcu',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: b.roundTrip == round
+                                            ? Colors.white
+                                            : muted,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: airportTile(true)),
+                      SizedBox(
+                        width: 36,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 44,
+                          ),
+                          tooltip: 'Zameni polazište i odredište',
+                          onPressed: () {
+                            setState(() {
+                              final old = b.origin;
+                              b.origin = b.destination;
+                              b.destination = old;
+                            });
+                            b.update();
+                          },
+                          icon: const Icon(
+                            Icons.swap_horiz,
+                            size: 22,
+                            color: green,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: airportTile(false)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: searchField(
+                            'Polazak',
+                            b.dateLabel,
+                            Icons.calendar_today_outlined,
+                            () => pickDate(false),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: searchField(
+                            'Putnici i klasa',
+                            '${b.count} ${b.count == 1 ? 'putnik' : 'putnika'}',
+                            Icons.person_outline,
+                            choosePassengers,
+                            subtitle: b.cabin,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (b.roundTrip) ...[
+                    const SizedBox(height: 10),
+                    searchField(
+                      'Povratak',
+                      b.returnDate == null
+                          ? 'Izaberite datum'
+                          : '${b.returnDate!.day}.${b.returnDate!.month}.${b.returnDate!.year}.',
+                      Icons.event_outlined,
+                      () => pickDate(true),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        if (b.origin == b.destination) {
+                          message(
+                            context,
+                            'Izaberite različito polazište i odredište.',
+                          );
+                          return;
+                        }
+                        if (b.roundTrip && b.returnDate == null) {
+                          message(context, 'Izaberite datum povratka.');
+                          return;
+                        }
+                        b.reference = null;
+                        open(context, ResultsScreen(b: b));
+                      },
+                      icon: const Icon(Icons.search, size: 19),
+                      label: const Text(
+                        'Pretraži letove',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (widget.explore)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Popularne destinacije',
+                  style: TextStyle(
+                    fontFamily: 'AirVistaSerif',
+                    fontSize: 23,
+                    fontWeight: FontWeight.w600,
+                    color: green,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => open(context, const CitiesScreen()),
+                    child: const Text('View all'),
+                  ),
+                ),
+                SizedBox(
+                  height: 190,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      destination('Rim', 'Italija', 'rome.jpg'),
+                      destination('Pariz', 'Francuska', 'Paris.jpg'),
+                      destination('London', 'Velika Britanija', 'london.jpg'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     ),
   );
-  Widget destination(
-    String city,
-    String country,
-    String image,
-    String airport,
-  ) => Padding(
+  Widget destination(String city, String country, String image) => Padding(
     padding: const EdgeInsets.only(right: 14),
     child: SizedBox(
       width: 156,
       child: InkWell(
-        onTap: () {
-          setState(() => b.destination = airport);
-          b.update();
-          message(context, 'Odredište: $city');
-        },
+        onTap: () => open(
+          context,
+          CityDetailsScreen(
+            city: cities.firstWhere((destination) => destination.name == city),
+          ),
+        ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
@@ -2044,6 +2073,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
         b.reference ??=
             'AV${DateTime.now().microsecondsSinceEpoch.toRadixString(36).toUpperCase()}';
+        NotificationService.instance.confirmBooking(b);
         b.update();
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute<void>(builder: (_) => ConfirmationScreen(b: b)),
@@ -2344,6 +2374,7 @@ class ReservationScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         spaced(small('Sve za vaše putovanje, na jednom mestu.')),
+        if (b.flightStatus != null) spaced(Text(b.flightStatus!)),
         reservationCard(b),
         const SizedBox(height: 4),
         const Text(

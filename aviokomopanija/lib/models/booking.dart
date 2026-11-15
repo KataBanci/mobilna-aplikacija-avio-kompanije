@@ -37,6 +37,7 @@ class Booking extends ChangeNotifier {
   final Map<int, String> seats = {};
   final List<Map<String, String>> passengers = [];
   String? reference;
+  String? flightStatus;
   int get count => adults + children + infants;
   int get seatCount => adults + children;
   int get farePrice => flight.price + [0, 30, 60][fare];

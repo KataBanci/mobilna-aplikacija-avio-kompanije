@@ -15,6 +15,9 @@ class AuthService {
     },
   ];
   static Map<String, String>? currentUser;
+  static Iterable<String> get userEmails => _users
+      .where((user) => user['role'] == 'user')
+      .map((user) => user['email']!);
 
   static String? register(String name, String email, String password) {
     final normalizedEmail = email.trim().toLowerCase();

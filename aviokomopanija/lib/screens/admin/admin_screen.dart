@@ -3,6 +3,8 @@ import 'package:aviokomopanija/consts/app_colors.dart';
 import 'package:aviokomopanija/screens/welcome_screen.dart';
 import 'package:aviokomopanija/services/auth_service.dart';
 
+import 'send_notification_screen.dart';
+
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
@@ -86,6 +88,16 @@ class AdminScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const SendNotificationScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.notifications_outlined),
+              label: const Text('Pošalji obaveštenje'),
+            ),
             for (final item in const [
               ('Letovi', 'Raspored i ponuda letova', Icons.flight_takeoff),
               ('Destinacije', 'Gradovi i mesta za putovanje', Icons.public),
