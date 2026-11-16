@@ -16,7 +16,9 @@ class _NotificationBellState extends State<NotificationBell> {
   @override
   void initState() {
     super.initState();
-    NotificationService.instance.refreshReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) NotificationService.instance.refreshReminders();
+    });
     timer = Timer.periodic(const Duration(minutes: 1), (_) {
       NotificationService.instance.refreshReminders();
     });

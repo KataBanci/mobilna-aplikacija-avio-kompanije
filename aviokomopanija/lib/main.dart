@@ -5,7 +5,39 @@ import 'package:aviokomopanija/consts/app_colors.dart';
 import 'package:aviokomopanija/screens/welcome_screen.dart';
 import 'package:aviokomopanija/screens/cities_screen.dart';
 
-void main() {
+import 'services/local_database.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await LocalDatabase.initialize();
+  } catch (_) {
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Lokalni podaci nisu mogli da se učitaju. Ponovite učitavanje aplikacije. Postojeći podaci nisu prepisani.',
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: main,
+                    child: const Text('Pokušaj ponovo'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return;
+  }
   runApp(const MyApp());
 }
 
@@ -16,6 +48,33 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AirVista',
+      builder: (context, child) => ValueListenableBuilder<String?>(
+        valueListenable: LocalDatabase.error,
+        builder: (context, error, _) => Column(
+          children: [
+            Expanded(child: child!),
+            if (error != null)
+              Material(
+                color: const Color(0xFFFFE5DF),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(error)),
+                        TextButton(
+                          onPressed: LocalDatabase.save,
+                          child: const Text('Pokušaj ponovo'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
       locale: const Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Latn'),
       supportedLocales: const [
         Locale.fromSubtags(languageCode: 'sr', scriptCode: 'Latn'),

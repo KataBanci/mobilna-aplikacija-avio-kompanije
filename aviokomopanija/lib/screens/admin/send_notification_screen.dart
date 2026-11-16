@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../models/booking.dart';
+import '../../services/auth_service.dart';
 import '../../services/notification_service.dart';
+import 'management_screens.dart';
 
 class SendNotificationScreen extends StatefulWidget {
   const SendNotificationScreen({super.key});
@@ -11,121 +13,138 @@ class SendNotificationScreen extends StatefulWidget {
 
 class _SendNotificationScreenState extends State<SendNotificationScreen> {
   final form = GlobalKey<FormState>();
-  final body = TextEditingController();
-  final time = TextEditingController();
-  String type = 'Specijalna ponuda';
-  String flight = flights.first.number;
+  final fields = AdminFields({'title': '', 'body': ''});
+  String type = 'Opšte obaveštenje', recipients = 'Svi korisnici';
+  String? flight, email;
   @override
   void dispose() {
-    body.dispose();
-    time.dispose();
+    fields.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Slanje obaveštenja')),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Form(
-          key: form,
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: type,
-                decoration: const InputDecoration(
-                  labelText: 'Vrsta obaveštenja',
-                ),
-                items:
-                    [
-                          'Specijalna ponuda',
-                          'Promena vremena leta',
-                          'Let je otkazan',
-                        ]
-                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                        .toList(),
-                onChanged: (v) => setState(() => type = v!),
-              ),
-              const SizedBox(height: 16),
-              if (type != 'Specijalna ponuda') ...[
-                DropdownButtonFormField<String>(
-                  initialValue: flight,
-                  decoration: const InputDecoration(labelText: 'Let'),
-                  items: flights
-                      .map(
-                        (f) => DropdownMenuItem(
-                          value: f.number,
-                          child: Text('${f.number} · ${f.airline}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => flight = v!,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Poruka se šalje putnicima koji su rezervisali ovaj let.',
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (type == 'Promena vremena leta') ...[
-                TextFormField(
-                  controller: time,
-                  decoration: const InputDecoration(
-                    labelText: 'Novo vreme polaska (HH:mm)',
-                  ),
-                  validator: (v) =>
-                      RegExp(r'^([01]\d|2[0-3]):[0-5]\d$')
-                          .hasMatch(v?.trim() ?? '')
-                      ? null
-                      : 'Unesite vreme u formatu HH:mm.',
-                ),
-                const SizedBox(height: 16),
-              ],
-              TextFormField(
-                controller: body,
-                maxLines: 4,
-                maxLength: 1000,
-                decoration: const InputDecoration(
-                  labelText: 'Tekst obaveštenja',
-                ),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Unesite tekst obaveštenja.'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                icon: const Icon(Icons.send_outlined),
-                label: const Text('Pošalji obaveštenje'),
-                onPressed: () {
-                  if (!form.currentState!.validate()) return;
-                  final departure = type == 'Promena vremena leta'
-                      ? time.text.trim()
-                      : null;
-                  final count = NotificationService.instance.send(
-                    title: type,
-                    body: departure == null
-                        ? body.text.trim()
-                        : 'Novo vreme polaska: $departure. ${body.text.trim()}',
-                    flightNumber: type == 'Specijalna ponuda' ? null : flight,
-                    departure: departure,
-                    cancelled: type == 'Let je otkazan',
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        count == 0
-                            ? 'Nema primalaca za izabrani let.'
-                            : 'Poslato obaveštenja: $count.',
+  Widget build(BuildContext context) => AdminPage(
+    title: 'Novo obaveštenje',
+    child: Form(
+      key: form,
+      child: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          fields.field('title', 'Naslov obaveštenja'),
+          DropdownButtonFormField<String>(
+            initialValue: type,
+            decoration: const InputDecoration(labelText: 'Vrsta obaveštenja'),
+            items: [
+              'Opšte obaveštenje',
+              'Specijalna ponuda',
+              'Promena vremena leta',
+              'Otkazivanje leta',
+              'Podsetnik za putovanje',
+            ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+            onChanged: (v) => type = v!,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: recipients,
+            decoration: const InputDecoration(labelText: 'Primaoci'),
+            items: [
+              'Svi korisnici',
+              'Putnici određenog leta',
+              'Određeni korisnik',
+            ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+            onChanged: (v) => setState(() => recipients = v!),
+          ),
+          const SizedBox(height: 16),
+          if (recipients == 'Putnici određenog leta') ...[
+            DropdownButtonFormField<String>(
+              initialValue: flight,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Izaberite let'),
+              items: flights
+                  .map(
+                    (f) => DropdownMenuItem(
+                      value: f.number,
+                      child: Text(
+                        '${f.number} · ${f.origin} → ${f.destination}',
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  );
-                },
+                  )
+                  .toList(),
+              onChanged: (v) => flight = v,
+              validator: (v) => v == null ? 'Izaberite let.' : null,
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (recipients == 'Određeni korisnik') ...[
+            DropdownButtonFormField<String>(
+              initialValue: email,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Izaberite korisnika',
               ),
-            ],
+              items: AuthService.users
+                  .where((u) => u['role'] == 'user')
+                  .map(
+                    (u) => DropdownMenuItem(
+                      value: u['email'],
+                      child: Text(
+                        '${u['name']} · ${u['email']}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => email = v,
+              validator: (v) => v == null ? 'Izaberite korisnika.' : null,
+            ),
+            const SizedBox(height: 16),
+          ],
+          fields.field('body', 'Tekst obaveštenja', lines: 5),
+          FilledButton.icon(
+            icon: const Icon(Icons.send_outlined),
+            label: const Text('Pošalji obaveštenje'),
+            onPressed: () {
+              if (!form.currentState!.validate()) return;
+              final count = NotificationService.instance.send(
+                title: fields.value('title'),
+                body: '[$type] ${fields.value('body')}',
+                flightNumber: recipients == 'Putnici određenog leta'
+                    ? flight
+                    : null,
+                recipientEmail: recipients == 'Određeni korisnik'
+                    ? email
+                    : null,
+              );
+              adminMessage(
+                context,
+                count == 0
+                    ? 'Nema primalaca za izabranu grupu.'
+                    : 'Poslato obaveštenja: $count.',
+              );
+            },
           ),
-        ),
+          const SizedBox(height: 28),
+          const Text(
+            'Poslata obaveštenja',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          ListenableBuilder(
+            listenable: NotificationService.instance,
+            builder: (context, _) => Column(
+              children: [
+                if (NotificationService.instance.sent.isEmpty)
+                  const ListTile(title: Text('Još nema poslatih obaveštenja.')),
+                for (final n in NotificationService.instance.sent.take(50))
+                  ListTile(
+                    title: Text(n.title),
+                    subtitle: Text('${n.owner}\n${n.body}'),
+                    trailing: Icon(n.isRead ? Icons.done_all : Icons.done),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
   );

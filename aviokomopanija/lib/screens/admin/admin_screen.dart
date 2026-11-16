@@ -4,6 +4,7 @@ import 'package:aviokomopanija/screens/welcome_screen.dart';
 import 'package:aviokomopanija/services/auth_service.dart';
 
 import 'send_notification_screen.dart';
+import 'management_screens.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -128,27 +129,18 @@ class AdminScreen extends StatelessWidget {
                     ),
                     subtitle: Text(item.$2),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => showDialog<void>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(item.$1),
-                        content: const Text(
-                          'Upravljanje podacima povezujemo u narednim koracima.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Zatvori'),
-                          ),
-                        ],
-                      ),
-                    ),
+                    onTap: () => adminOpen(context, switch (item.$1) {
+                      'Letovi' => const AdminFlightsScreen(),
+                      'Destinacije' => const AdminCitiesScreen(),
+                      'Korisnici' => const AdminUsersScreen(),
+                      _ => const AdminReservationsScreen(),
+                    }),
                   ),
                 ),
               ),
             const SizedBox(height: 12),
             const Text(
-              'Razvojna verzija · lokalni probni nalozi',
+              'Lokalna administracija · podaci se čuvaju na ovom uređaju',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54, fontSize: 12),
             ),

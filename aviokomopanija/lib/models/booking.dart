@@ -4,6 +4,9 @@ class Flight {
   final String airline, departure, arrival, duration, number;
   final int price;
   final bool direct;
+  final String origin, destination, aircraft, status;
+  final DateTime? date, arrivalDate;
+  final int capacity;
   const Flight(
     this.airline,
     this.departure,
@@ -11,11 +14,18 @@ class Flight {
     this.duration,
     this.number,
     this.price,
-    this.direct,
-  );
+    this.direct, {
+    this.origin = 'Beograd (BEG)',
+    this.destination = 'Rim (FCO)',
+    this.aircraft = 'Airbus A320',
+    this.status = 'Zakazan',
+    this.date,
+    this.arrivalDate,
+    this.capacity = 180,
+  });
 }
 
-const flights = [
+final flights = [
   Flight('Air Serbia', '08:20', '10:15', '1 č 55 min', 'JU 530', 89, true),
   Flight('Ryanair', '14:35', '16:30', '1 č 55 min', 'FR 7941', 95, true),
   Flight('Wizz Air', '18:10', '20:05', '1 č 55 min', 'W6 4115', 109, true),
@@ -38,6 +48,10 @@ class Booking extends ChangeNotifier {
   final List<Map<String, String>> passengers = [];
   String? reference;
   String? flightStatus;
+  String status = 'Potvrđena';
+  String paymentStatus = 'Demonstraciono plaćanje potvrđeno';
+  int? bookedTotal;
+  final List<String> history = [];
   int get count => adults + children + infants;
   int get seatCount => adults + children;
   int get farePrice => flight.price + [0, 30, 60][fare];
@@ -47,7 +61,7 @@ class Booking extends ChangeNotifier {
       extras.fold<int>(0, (sum, i) => sum + [29, 12, 9, 11][i] * count);
   int get baseCost =>
       (farePrice + (cabin == 'Biznis' ? 100 : 0)) * count * (roundTrip ? 2 : 1);
-  int get total => baseCost + extrasCost + seatCost;
+  int get total => bookedTotal ?? baseCost + extrasCost + seatCost;
   String get route =>
       '${origin.split(' (').first} → ${destination.split(' (').first}';
   String code(String airport) => airport.split('(').last.replaceAll(')', '');

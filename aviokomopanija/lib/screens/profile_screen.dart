@@ -3,6 +3,8 @@ import 'package:aviokomopanija/consts/app_colors.dart';
 import 'package:aviokomopanija/screens/welcome_screen.dart';
 import 'package:aviokomopanija/services/auth_service.dart';
 
+import 'notifications_screen.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -196,7 +198,14 @@ class ProfileScreen extends StatelessWidget {
                           color: Color(0xFF8D9692),
                         ),
                         onTap: () {
-                          if (index == menu.length - 1) {
+                          if (menu[index].$1 == 'Obaveštenja') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute<void>(
+                                builder: (_) => const NotificationsScreen(),
+                              ),
+                            );
+                          } else if (index == menu.length - 1) {
                             logout(context);
                           } else if (index == 0) {
                             showDetails(

@@ -5,19 +5,23 @@ import '../models/city.dart';
 import 'cities_screen.dart';
 import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
+import '../services/catalog_service.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 const green = Color(0xFF244638);
 const cream = Color(0xFFFAFAF8);
 const muted = Color(0xFF7C837E);
-const airports = [
+List<String> get airports => <String>{
   'Beograd (BEG)',
   'Rim (FCO)',
   'Pariz (CDG)',
   'London (LHR)',
   'Beč (VIE)',
-];
+  for (final f in flights) ...[f.origin, f.destination],
+  for (final c in cities)
+    if (RegExp(r'^.+ \([A-Z]{3}\)$').hasMatch(c.airport)) c.airport,
+}.toList();
 void open(BuildContext c, Widget page) =>
     Navigator.of(c).push(MaterialPageRoute<void>(builder: (_) => page));
 void message(BuildContext c, String text) =>
@@ -108,7 +112,11 @@ class _BookingHomeState extends State<BookingHome> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: b,
+    listenable: Listenable.merge([
+      b,
+      CatalogService.instance,
+      NotificationService.instance,
+    ]),
     builder: (context, _) => Scaffold(
       body: SafeArea(
         child: Center(
@@ -841,6 +849,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           return;
                         }
                         b.reference = null;
+                        b.bookedTotal = null;
+                        b.status = 'Potvrđena';
                         open(context, ResultsScreen(b: b));
                       },
                       icon: const Icon(Icons.search, size: 19),
@@ -882,9 +892,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      destination('Rim', 'Italija', 'rome.jpg'),
-                      destination('Pariz', 'Francuska', 'Paris.jpg'),
-                      destination('London', 'Velika Britanija', 'london.jpg'),
+                      for (final city in cities.take(6)) destination(city),
                     ],
                   ),
                 ),
@@ -894,23 +902,18 @@ class _SearchScreenState extends State<SearchScreen> {
       ],
     ),
   );
-  Widget destination(String city, String country, String image) => Padding(
+  Widget destination(City city) => Padding(
     padding: const EdgeInsets.only(right: 14),
     child: SizedBox(
       width: 156,
       child: InkWell(
-        onTap: () => open(
-          context,
-          CityDetailsScreen(
-            city: cities.firstWhere((destination) => destination.name == city),
-          ),
-        ),
+        onTap: () => open(context, CityDetailsScreen(city: city)),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset('assets/images/$image', fit: BoxFit.cover),
+              CityImage(city),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -927,7 +930,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      city,
+                      city.name,
                       style: const TextStyle(
                         fontFamily: 'AirVistaSerif',
                         fontSize: 24,
@@ -935,7 +938,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ),
                     Text(
-                      country,
+                      city.country,
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -971,6 +974,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
             .where(
               (f) =>
                   (!direct || f.direct) &&
+                  f.origin == b.origin &&
+                  f.destination == b.destination &&
+                  (f.date == null || DateUtils.isSameDay(f.date, b.date)) &&
+                  f.status != 'Otkazan' &&
+                  f.status != 'Završen' &&
+                  NotificationService.instance.availableSeats(f, b.date) >=
+                      b.seatCount &&
                   (!cheap || f.price <= 110) &&
                   (airline == 'Sve aviokompanije' || f.airline == airline),
             )
@@ -1220,6 +1230,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     ),
                     const SizedBox(height: 18),
                     flightTimes(b, f),
+                    small(
+                      '${f.status} · Slobodna sedišta: ${NotificationService.instance.availableSeats(f, b.date)}',
+                    ),
                     const SizedBox(height: 18),
                     const Divider(),
                     Row(
@@ -1350,7 +1363,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 flightTimes(b, b.flight),
                 const Divider(height: 32),
                 small(
-                  '${b.flight.number} · Airbus A319\nLični predmet do 4 kg uključen.\nRučni prtljag do 8 kg prema izabranoj tarifi.',
+                  '${b.flight.number} · ${b.flight.aircraft}\nLični predmet do 4 kg uključen.\nRučni prtljag do 8 kg prema izabranoj tarifi.',
                 ),
               ],
             ),
@@ -1664,18 +1677,6 @@ class SeatsScreen extends StatefulWidget {
 
 class _SeatsScreenState extends State<SeatsScreen> {
   int passenger = 0;
-  final occupied = {
-    '2A',
-    '2B',
-    '3F',
-    '4A',
-    '5C',
-    '6D',
-    '7E',
-    '8B',
-    '9A',
-    '10F',
-  };
   @override
   Widget build(BuildContext context) {
     final b = widget.b;
@@ -1738,7 +1739,7 @@ class _SeatsScreenState extends State<SeatsScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                for (int row = 1; row <= 10; row++)
+                for (int row = 1; row <= (b.flight.capacity / 6).ceil(); row++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 9),
                     child: Row(
@@ -1797,7 +1798,11 @@ class _SeatsScreenState extends State<SeatsScreen> {
     ],
   );
   Widget seat(Booking b, String id, int row) {
-    final selected = b.seats.containsValue(id), taken = occupied.contains(id);
+    final selected = b.seats.containsValue(id),
+        taken =
+            NotificationService.instance.occupiedSeats(b).contains(id) ||
+            (row - 1) * 6 + id.codeUnitAt(id.length - 1) - 64 >
+                b.flight.capacity;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Semantics(
@@ -2069,6 +2074,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         if (!form.currentState!.validate()) return;
         if (!accepted) {
           message(context, 'Potvrdite demonstracionu rezervaciju.');
+          return;
+        }
+        final bookingError = NotificationService.instance.validateBooking(b);
+        if (bookingError != null) {
+          message(context, bookingError);
           return;
         }
         b.reference ??=
@@ -2479,9 +2489,9 @@ Widget reservationCard(Booking b) => panel(
         children: [
           const Icon(Icons.verified_outlined, size: 18, color: green),
           const SizedBox(width: 7),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Potvrđena rezervacija',
+              '${b.status} rezervacija',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -2620,34 +2630,46 @@ class TripsScreen extends StatelessWidget {
   final Booking b;
   const TripsScreen({super.key, required this.b});
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        heading('Vaša putovanja'),
-        if (b.reference != null) ...[
-          reservationCard(b),
-          action(
-            'Pregledaj rezervaciju',
-            () => open(context, ConfirmationScreen(b: b)),
-          ),
-        ] else
-          panel(
-            const Column(
-              children: [
-                Icon(Icons.airplane_ticket_outlined, size: 48, color: green),
-                SizedBox(height: 16),
-                Text('Vaša sledeća avantura vas čeka.'),
-                SizedBox(height: 8),
-                Text(
-                  'Rezervisana putovanja pojaviće se ovde.',
-                  style: TextStyle(color: muted),
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: NotificationService.instance,
+    builder: (context, _) {
+      final saved = NotificationService.instance.myBookings;
+      final trips = saved.isEmpty && b.reference != null ? [b] : saved;
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            heading('Vaša putovanja'),
+            for (final trip in trips) ...[
+              reservationCard(trip),
+              action(
+                'Pregledaj rezervaciju',
+                () => open(context, ReservationScreen(b: trip)),
+              ),
+            ],
+            if (trips.isEmpty)
+              panel(
+                const Column(
+                  children: [
+                    Icon(
+                      Icons.airplane_ticket_outlined,
+                      size: 48,
+                      color: green,
+                    ),
+                    SizedBox(height: 16),
+                    Text('Vaša sledeća avantura vas čeka.'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Rezervisana putovanja pojaviće se ovde.',
+                      style: TextStyle(color: muted),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-      ],
-    ),
+              ),
+          ],
+        ),
+      );
+    },
   );
 }

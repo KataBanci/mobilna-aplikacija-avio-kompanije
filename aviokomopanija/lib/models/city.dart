@@ -5,16 +5,30 @@ class City {
     this.file,
     this.slogan,
     this.about,
-    this.attractions,
-  );
+    this.attractions, {
+    this.airport = '',
+    this.gallery = const [],
+    this.bestTime = '',
+    this.currency = '',
+    this.language = '',
+    this.timezone = '',
+    this.budget = '',
+    this.id = '',
+  });
 
   final String name, country, file, slogan, about;
   final List<String> attractions;
-  String get image => 'assets/images/$file';
+  final String airport, bestTime, currency, language, timezone, budget;
+  final List<String> gallery;
+  final String id;
+  String get key => id.isEmpty ? name : id;
+  String get image => file.startsWith('http') || file.startsWith('assets/')
+      ? file
+      : 'assets/images/$file';
 }
 
 // Nazivi fajlova prate postojeće fotografije, uključujući velika slova.
-const cities = <City>[
+final cities = <City>[
   City(
     'Pariz',
     'Francuska',

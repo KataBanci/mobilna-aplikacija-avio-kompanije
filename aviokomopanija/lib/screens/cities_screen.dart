@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
 
 import '../models/city.dart';
+import '../services/catalog_service.dart';
+import '../services/auth_service.dart';
 
-// Lokalne ocene traju dok je aplikacija pokrenuta; nema serverskih recenzija.
-final Map<String, ({int stars, String comment})> _reviews = {};
+// Recenzije se čuvaju u lokalnoj bazi zajedno sa destinacijama.
+Map<String, ({int stars, String comment})> get _reviews => {
+  for (final r in CatalogService.instance.reviews.where(
+    (r) => r.owner == (AuthService.currentUser?['email'] ?? 'guest'),
+  ))
+    r.city: (stars: r.stars, comment: r.comment),
+};
 
 class CityImage extends StatelessWidget {
   const CityImage(this.city, {super.key});
   final City city;
 
   @override
-  Widget build(BuildContext context) => Image.asset(
-    city.image,
-    fit: BoxFit.cover,
-    errorBuilder: (_, error, stack) => const ColoredBox(
-      color: Color(0xFFDCE5DE),
-      child: Center(child: Icon(Icons.landscape_outlined, size: 48)),
-    ),
-  );
+  Widget build(BuildContext context) => destinationImage(city.image);
+}
+
+Widget destinationImage(String path) {
+  Widget error(BuildContext context, Object error, StackTrace? stack) =>
+      const ColoredBox(
+        color: Color(0xFFDCE5DE),
+        child: Center(child: Icon(Icons.landscape_outlined, size: 48)),
+      );
+  return path.startsWith('https://') || path.startsWith('http://')
+      ? Image.network(path, fit: BoxFit.cover, errorBuilder: error)
+      : Image.asset(
+          path.startsWith('assets/') ? path : 'assets/images/$path',
+          fit: BoxFit.cover,
+          errorBuilder: (_, error, stack) => const ColoredBox(
+            color: Color(0xFFDCE5DE),
+            child: Center(child: Icon(Icons.landscape_outlined, size: 48)),
+          ),
+        );
 }
 
 class CitiesScreen extends StatelessWidget {
@@ -26,69 +44,72 @@ class CitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Destinacije')),
-    body: LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 900
-            ? 4
-            : constraints.maxWidth >= 600
-            ? 3
-            : 2;
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisExtent: 230,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: cities.length,
-          itemBuilder: (context, index) {
-            final city = cities[index];
-            return Card(
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => CityDetailsScreen(city: city),
+    body: ListenableBuilder(
+      listenable: CatalogService.instance,
+      builder: (context, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 900
+              ? 4
+              : constraints.maxWidth >= 600
+              ? 3
+              : 2;
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisExtent: 230,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: cities.length,
+            itemBuilder: (context, index) {
+              final city = cities[index];
+              return Card(
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => CityDetailsScreen(city: city),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: CityImage(city),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              city.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              city.country,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: CityImage(city),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            city.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            city.country,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
     ),
   );
 }
@@ -111,11 +132,17 @@ class _CityDetailsScreenState extends State<CityDetailsScreen> {
     final review = _reviews[widget.city.name];
     _stars = review?.stars ?? 0;
     _comment = TextEditingController(text: review?.comment ?? '');
+    CatalogService.instance.addListener(refresh);
+  }
+
+  void refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _comment.dispose();
+    CatalogService.instance.removeListener(refresh);
     super.dispose();
   }
 
@@ -136,7 +163,18 @@ class _CityDetailsScreenState extends State<CityDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final city = widget.city;
+    if (!cities.any((c) => c.key == widget.city.key)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Destinacija')),
+        body: const Center(child: Text('Ova destinacija više nije dostupna.')),
+      );
+    }
+    final city =
+        cities.where((c) => c.key == widget.city.key).firstOrNull ??
+        widget.city;
+    final cityReviews = CatalogService.instance.reviews
+        .where((r) => r.city == city.name)
+        .toList();
     final review = _reviews[city.name];
     return Scaffold(
       appBar: AppBar(title: Text(city.name)),
@@ -210,26 +248,74 @@ class _CityDetailsScreenState extends State<CityDetailsScreen> {
                       ),
                       section(
                         'Informacije za putovanje',
-                        const Text(
-                          'Vreme za posetu, valuta, jezik, vremenska zona i okvirni budžet biće dodati nakon provere podataka.',
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final info in [
+                              ('Aerodrom', city.airport),
+                              ('Najbolje vreme za posetu', city.bestTime),
+                              ('Valuta', city.currency),
+                              ('Jezik', city.language),
+                              ('Vremenska zona', city.timezone),
+                              ('Okvirni budžet', city.budget),
+                            ])
+                              if (info.$2.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text('${info.$1}: ${info.$2}'),
+                                ),
+                            if ([
+                              city.airport,
+                              city.bestTime,
+                              city.currency,
+                              city.language,
+                              city.timezone,
+                              city.budget,
+                            ].every((v) => v.isEmpty))
+                              const Text(
+                                'Informacije za putovanje još nisu unete.',
+                              ),
+                          ],
                         ),
                       ),
+                      if (city.gallery.isNotEmpty)
+                        section(
+                          'Galerija',
+                          SizedBox(
+                            height: 180,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                for (final photo in city.gallery)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 12),
+                                    child: SizedBox(
+                                      width: 240,
+                                      child: destinationImage(photo),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       section(
                         'Ocene i recenzije',
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              review == null
+                              cityReviews.isEmpty
                                   ? 'Još nema lokalnih recenzija.'
-                                  : 'Lokalna ocena: ${review.stars}/5 · 1 recenzija',
+                                  : 'Ocena: ${(cityReviews.fold<int>(0, (n, r) => n + r.stars) / cityReviews.length).toStringAsFixed(1)}/5 · Recenzije: ${cityReviews.length}',
                             ),
-                            if (review != null && review.comment.isNotEmpty)
+                            for (final r in cityReviews)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
-                                child: Text(review.comment),
+                                child: Text(
+                                  '${r.name} · ${r.stars}/5\n${r.comment}',
+                                ),
                               ),
                             const SizedBox(height: 8),
                             const Text('Tvoja ocena'),
@@ -262,18 +348,18 @@ class _CityDetailsScreenState extends State<CityDetailsScreen> {
                                   ? null
                                   : () {
                                       setState(
-                                        () => _reviews[city.name] = (
-                                          stars: _stars,
-                                          comment: _comment.text.trim(),
-                                        ),
+                                        () =>
+                                            CatalogService.instance.saveReview(
+                                              city,
+                                              _stars,
+                                              _comment.text.trim(),
+                                            ),
                                       );
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         const SnackBar(
-                                          content: Text(
-                                            'Ocena je sačuvana za ovu sesiju.',
-                                          ),
+                                          content: Text('Ocena je sačuvana.'),
                                         ),
                                       );
                                     },
@@ -284,7 +370,7 @@ class _CityDetailsScreenState extends State<CityDetailsScreen> {
                               ),
                             ),
                             const Text(
-                              'Ocene i komentari su lokalni i brišu se nakon ponovnog pokretanja aplikacije.',
+                              'Administrator može ukloniti neprimerene recenzije.',
                             ),
                           ],
                         ),
