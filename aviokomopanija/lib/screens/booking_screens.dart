@@ -8,6 +8,8 @@ import '../services/notification_service.dart';
 import '../services/catalog_service.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import '../services/auth_service.dart';
+import 'guest_sign_in.dart';
 
 const green = Color(0xFF244638);
 const cream = Color(0xFFFAFAF8);
@@ -123,7 +125,7 @@ class _BookingHomeState extends State<BookingHome> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: tab == 3
-                ? const ProfileScreen()
+                ? ProfileScreen(onBack: () => selectTab(0))
                 : tab == 2
                 ? TripsScreen(b: b)
                 : SearchScreen(b: b, explore: tab == 0, key: ValueKey(tab)),
@@ -132,10 +134,7 @@ class _BookingHomeState extends State<BookingHome> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
-        onDestinationSelected: (i) {
-          b.tab = i;
-          b.update();
-        },
+        onDestinationSelected: selectTab,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.explore_outlined),
@@ -154,6 +153,11 @@ class _BookingHomeState extends State<BookingHome> {
       ),
     ),
   );
+
+  void selectTab(int index) {
+    b.tab = index;
+    b.update();
+  }
 }
 
 class BookingPage extends StatelessWidget {
@@ -171,95 +175,107 @@ class BookingPage extends StatelessWidget {
     this.bottom,
   });
   @override
-  Widget build(BuildContext context) => Scaffold(
-    bottomNavigationBar: NavigationBar(
-      selectedIndex: step == 7 ? 2 : 1,
-      onDestinationSelected: (i) {
-        goHome(context, b, i);
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.explore_outlined),
-          label: 'Istraži',
-        ),
-        NavigationDestination(icon: Icon(Icons.search), label: 'Pretraga'),
-        NavigationDestination(
-          icon: Icon(Icons.airplane_ticket_outlined),
-          label: 'Putovanja',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          label: 'Profil',
-        ),
-      ],
-    ),
-    appBar: AppBar(
-      leading: IconButton(
-        tooltip: 'Nazad',
-        icon: const Icon(Icons.arrow_back_rounded, size: 21),
-        onPressed: () => Navigator.of(context).maybePop(),
-      ),
-      actions: [
-        IconButton(
-          tooltip: 'Početna',
-          icon: const Icon(Icons.home_outlined, size: 22),
-          onPressed: () => goHome(context, b),
-        ),
-        const SizedBox(width: 8),
-      ],
-      title: const Text(
-        'AirVista',
-        style: TextStyle(fontFamily: 'AirVistaSerif', color: green),
-      ),
-      centerTitle: true,
-    ),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Column(
-          children: [
-            if (step < 7)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: List.generate(
-                    7,
-                    (i) => Expanded(
-                      child: Container(
-                        height: 3,
-                        margin: const EdgeInsets.only(right: 5),
-                        color: i < step ? green : const Color(0xFFE5E9E2),
+  Widget build(BuildContext context) =>
+      AuthService.currentUser == null && step > 2
+      ? const Scaffold(
+          body: SafeArea(
+            child: GuestSignIn(
+              message: 'Prijavi se ili se registruj da rezervišeš let.',
+            ),
+          ),
+        )
+      : Scaffold(
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: step == 7 ? 2 : 1,
+            onDestinationSelected: (i) {
+              goHome(context, b, i);
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.explore_outlined),
+                label: 'Istraži',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.search),
+                label: 'Pretraga',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.airplane_ticket_outlined),
+                label: 'Putovanja',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                label: 'Profil',
+              ),
+            ],
+          ),
+          appBar: AppBar(
+            leading: IconButton(
+              tooltip: 'Nazad',
+              icon: const Icon(Icons.arrow_back_rounded, size: 21),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Početna',
+                icon: const Icon(Icons.home_outlined, size: 22),
+                onPressed: () => goHome(context, b),
+              ),
+              const SizedBox(width: 8),
+            ],
+            title: const Text(
+              'AirVista',
+              style: TextStyle(fontFamily: 'AirVistaSerif', color: green),
+            ),
+            centerTitle: true,
+          ),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                children: [
+                  if (step < 7)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: List.generate(
+                          7,
+                          (i) => Expanded(
+                            child: Container(
+                              height: 3,
+                              margin: const EdgeInsets.only(right: 5),
+                              color: i < step ? green : const Color(0xFFE5E9E2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (step < 7) small('KORAK $step OD 7'),
+                          if (title.isNotEmpty) heading(title),
+                          child,
+                        ],
                       ),
                     ),
                   ),
-                ),
-              ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (step < 7) small('KORAK $step OD 7'),
-                    if (title.isNotEmpty) heading(title),
-                    child,
-                  ],
-                ),
+                  if (bottom != null)
+                    SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                        child: bottom,
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (bottom != null)
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: bottom,
-                ),
-              ),
-          ],
-        ),
-      ),
-    ),
-  );
+          ),
+        );
 }
 
 class SearchScreen extends StatefulWidget {
@@ -1333,7 +1349,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
       b: b,
       title: 'Detalji leta',
       step: 2,
-      bottom: action('Nastavi', () => open(context, PassengerScreen(b: b))),
+      bottom: action(
+        AuthService.currentUser == null ? 'Prijavi se za nastavak' : 'Nastavi',
+        () {
+          if (AuthService.currentUser == null) {
+            open(
+              context,
+              const Scaffold(
+                body: SafeArea(
+                  child: GuestSignIn(
+                    message:
+                        'Za nastavak rezervacije prijavi se ili napravi nalog.',
+                  ),
+                ),
+              ),
+            );
+            return;
+          }
+          open(context, PassengerScreen(b: b));
+        },
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1450,9 +1485,12 @@ class PassengerScreen extends StatefulWidget {
 class _PassengerScreenState extends State<PassengerScreen> {
   final form = GlobalKey<FormState>();
   late final List<Map<String, String>> data;
+  late final List<int> nameRevisions;
+  final savedPassengers = AuthService.savedPassengers;
   @override
   void initState() {
     super.initState();
+    nameRevisions = List.filled(widget.b.count, 0);
     data = List.generate(
       widget.b.count,
       (i) => i < widget.b.passengers.length
@@ -1477,6 +1515,9 @@ class _PassengerScreenState extends State<PassengerScreen> {
     labeledField(
       label,
       TextFormField(
+        key: key == 'first' || key == 'last'
+            ? ValueKey((i, key, nameRevisions[i]))
+            : null,
         initialValue: data[i][key],
         decoration: InputDecoration(hintText: hint),
         keyboardType: keyboard,
@@ -1525,6 +1566,27 @@ class _PassengerScreenState extends State<PassengerScreen> {
                     ),
                   ),
                   spaced(small(type(i))),
+                  if (savedPassengers.isNotEmpty)
+                    PopupMenuButton<Map<String, String>>(
+                      onSelected: (passenger) {
+                        setState(() {
+                          data[i]['first'] = passenger['first']!;
+                          data[i]['last'] = passenger['last']!;
+                          nameRevisions[i]++;
+                        });
+                      },
+                      itemBuilder: (context) => [
+                        for (final passenger in savedPassengers)
+                          PopupMenuItem(
+                            value: passenger,
+                            child: Text('${passenger['first']} ${passenger['last']}'),
+                          ),
+                      ],
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Izaberi sačuvanog putnika'),
+                      ),
+                    ),
                   field(i, 'Ime', 'first', hint: 'Marko'),
                   field(i, 'Prezime', 'last', hint: 'Petrović'),
                   spaced(
@@ -2029,7 +2091,7 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   final form = GlobalKey<FormState>();
   bool accepted = false;
-  String method = 'Platna kartica';
+  String method = AuthService.preferredPaymentMethod;
   bool luhn(String input) {
     final v = input.replaceAll(' ', '');
     if (!RegExp(r'^\d{13,19}$').hasMatch(v)) return false;
@@ -2118,12 +2180,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             panel(
               Column(
                 children: [
-                  for (final entry in [
-                    'Platna kartica',
-                    'PayPal',
-                    'Apple Pay',
-                    'Google Pay',
-                  ].asMap().entries) ...[
+                  for (final entry in AuthService.paymentMethods.asMap().entries) ...[
                     if (entry.key > 0) const SizedBox(height: 8),
                     Semantics(
                       selected: method == entry.value,
@@ -2633,6 +2690,11 @@ class TripsScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: NotificationService.instance,
     builder: (context, _) {
+      if (AuthService.currentUser == null) {
+        return const GuestSignIn(
+          message: 'Prijavi se ili se registruj da vidiš svoja putovanja i rezervišeš let.',
+        );
+      }
       final saved = NotificationService.instance.myBookings;
       final trips = saved.isEmpty && b.reference != null ? [b] : saved;
       return SingleChildScrollView(

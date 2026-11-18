@@ -4,10 +4,19 @@ import 'package:aviokomopanija/screens/welcome_screen.dart';
 import 'package:aviokomopanija/services/auth_service.dart';
 
 import 'notifications_screen.dart';
+import 'guest_sign_in.dart';
+import 'profile_pages.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key, required this.onBack});
 
+  final VoidCallback onBack;
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   void logout(BuildContext context) {
     AuthService.logout();
     Navigator.pushAndRemoveUntil(
@@ -17,26 +26,21 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void showDetails(BuildContext context, String title, String message) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zatvori'),
-          ),
-        ],
-      ),
-    );
+  Future<void> openPage(Widget page) async {
+    final changed = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => page));
+    if (mounted && changed == true) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final user = AuthService.currentUser;
-    final name = user?['name'] ?? 'Gost';
+    if (user == null) {
+      return const GuestSignIn(
+        message: 'Prijavi se ili se registruj da pristupiš svom profilu.',
+      );
+    }
+    final name = user['name'] ?? 'Gost';
     final initials = name
         .split(' ')
         .where((part) => part.isNotEmpty)
@@ -45,13 +49,37 @@ class ProfileScreen extends StatelessWidget {
         .join()
         .toUpperCase();
     final menu = [
-      ('Lični podaci', Icons.person_outline),
-      ('Sačuvani putnici', Icons.people_outline),
-      ('Načini plaćanja', Icons.credit_card_outlined),
-      ('Program lojalnosti', Icons.shield_outlined),
-      ('Obaveštenja', Icons.notifications_none_rounded),
-      ('Centar za pomoć', Icons.help_outline),
-      (user == null ? 'Prijava' : 'Odjavi se', Icons.logout),
+      (
+        'Lični podaci',
+        Icons.person_outline,
+        () => openPage(const PersonalDetailsPage()),
+      ),
+      (
+        'Sačuvani putnici',
+        Icons.people_outline,
+        () => openPage(const SavedPassengersPage()),
+      ),
+      (
+        'Načini plaćanja',
+        Icons.credit_card_outlined,
+        () => openPage(const PaymentMethodsPage()),
+      ),
+      (
+        'Program lojalnosti',
+        Icons.shield_outlined,
+        () => openPage(const LoyaltyPage()),
+      ),
+      (
+        'Obaveštenja',
+        Icons.notifications_none_rounded,
+        () => openPage(const NotificationsScreen()),
+      ),
+      (
+        'Centar za pomoć',
+        Icons.help_outline,
+        () => openPage(const HelpCenterPage()),
+      ),
+      ('Odjavi se', Icons.logout, () => logout(context)),
     ];
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: 'Nazad',
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.maybePop(context),
+          onPressed: widget.onBack,
         ),
         titleSpacing: 0,
         title: const Row(
@@ -78,18 +106,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Podešavanja',
-            icon: const Icon(Icons.settings_outlined, size: 26),
-            onPressed: () => showDetails(
-              context,
-              'Podešavanja',
-              'Podešavanja još nisu dostupna.',
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
       ),
       body: SafeArea(
         bottom: false,
@@ -148,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          user?['email'] ?? 'Prijavi se na svoj nalog',
+                          user['email'] ?? '',
                           style: const TextStyle(
                             color: Color(0xFF7D827D),
                             fontSize: 13,
@@ -197,32 +213,7 @@ class ProfileScreen extends StatelessWidget {
                           size: 24,
                           color: Color(0xFF8D9692),
                         ),
-                        onTap: () {
-                          if (menu[index].$1 == 'Obaveštenja') {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (_) => const NotificationsScreen(),
-                              ),
-                            );
-                          } else if (index == menu.length - 1) {
-                            logout(context);
-                          } else if (index == 0) {
-                            showDetails(
-                              context,
-                              'Lični podaci',
-                              user == null
-                                  ? 'Prijavi se da vidiš svoje podatke.'
-                                  : '$name\n${user['email']}',
-                            );
-                          } else {
-                            showDetails(
-                              context,
-                              menu[index].$1,
-                              'Ova funkcionalnost još nije dostupna.',
-                            );
-                          }
-                        },
+                        onTap: menu[index].$3,
                       ),
                       if (index < menu.length - 1)
                         const Divider(
@@ -238,44 +229,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFEBEEE8))),
-        ),
-        child: NavigationBar(
-          height: 68,
-          selectedIndex: 3,
-          elevation: 0,
-          backgroundColor: AppColors.lightScaffoldColor,
-          indicatorColor: Colors.transparent,
-          onDestinationSelected: (index) {
-            if (index == 0) Navigator.maybePop(context);
-            if (index == 1 || index == 2) {
-              showDetails(
-                context,
-                index == 1 ? 'Pretraga' : 'Putovanja',
-                'Ova funkcionalnost još nije dostupna.',
-              );
-            }
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              label: 'Početna',
-            ),
-            NavigationDestination(icon: Icon(Icons.search), label: 'Pretraga'),
-            NavigationDestination(
-              icon: Icon(Icons.confirmation_number_outlined),
-              label: 'Putovanja',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: AppColors.lightPrimary),
-              label: 'Profil',
-            ),
-          ],
         ),
       ),
     );

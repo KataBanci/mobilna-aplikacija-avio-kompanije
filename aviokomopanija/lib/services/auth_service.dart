@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 // Lokalni probni nalozi. LocalDatabase ih čuva između pokretanja.
 class AuthService {
   static void Function()? onChanged;
@@ -44,6 +46,60 @@ class AuthService {
     },
   ];
   static Map<String, String>? currentUser;
+  static Map<String, String>? get _account {
+    final email = currentUser?['email'];
+    for (final user in _users) {
+      if (user['email'] == email) return user;
+    }
+    return null;
+  }
+
+  static String get phone => _account?['phone'] ?? '';
+
+  static void updatePersonalDetails(String name, String phone) {
+    final account = _account;
+    if (account == null) return;
+    account['name'] = name;
+    account['phone'] = phone;
+    currentUser?['name'] = name;
+    onChanged?.call();
+  }
+
+  static List<Map<String, String>> get savedPassengers {
+    final data = jsonDecode(_account?['savedPassengers'] ?? '[]') as List;
+    return data.map((entry) => Map<String, String>.from(entry as Map)).toList();
+  }
+
+  static void savePassengers(List<Map<String, String>> passengers) =>
+      _saveProfileValue('savedPassengers', jsonEncode(passengers));
+
+  static const paymentMethods = [
+    'Platna kartica',
+    'PayPal',
+    'Apple Pay',
+    'Google Pay',
+  ];
+
+  static String get preferredPaymentMethod {
+    final method = _account?['preferredPaymentMethod'];
+    return paymentMethods.contains(method) ? method! : paymentMethods.first;
+  }
+
+  static void setPreferredPaymentMethod(String method) =>
+      _saveProfileValue('preferredPaymentMethod', method);
+
+  static bool get loyaltyMember => _account?['loyaltyMember'] == 'true';
+
+  static void setLoyaltyMembership(bool member) =>
+      _saveProfileValue('loyaltyMember', member.toString());
+
+  static void _saveProfileValue(String key, String value) {
+    final account = _account;
+    if (account == null) return;
+    account[key] = value;
+    onChanged?.call();
+  }
+
   static Iterable<String> get userEmails => _users
       .where((user) => user['role'] == 'user')
       .map((user) => user['email']!);

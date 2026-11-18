@@ -49,7 +49,51 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
+    expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('Test Putnik'), findsOneWidget);
+    await tester.tap(find.text('Lični podaci'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Novi Putnik');
+    await tester.tap(find.widgetWithText(FilledButton, 'Sačuvaj'));
+    await tester.pumpAndSettle();
+    expect(find.text('Novi Putnik'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.tap(find.widgetWithText(NavigationDestination, 'Putovanja'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vaša putovanja'), findsOneWidget);
+    await tester.tap(find.widgetWithText(NavigationDestination, 'Profil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sačuvani putnici'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dodaj putnika'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Ana');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Petrović');
+    await tester.tap(find.text('Sačuvaj'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ana Petrović'), findsOneWidget);
+    expect(AuthService.savedPassengers.single['first'], 'Ana');
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Načini plaćanja'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PayPal'));
+    await tester.pumpAndSettle();
+    expect(AuthService.preferredPaymentMethod, 'PayPal');
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    for (final title in [
+      'Program lojalnosti',
+      'Obaveštenja',
+      'Centar za pomoć',
+    ]) {
+      await tester.ensureVisible(find.text(title));
+      await tester.tap(find.text(title));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(AppBar, title), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+    }
     await tester.ensureVisible(find.text('Odjavi se'));
     await tester.tap(find.text('Odjavi se'));
     await tester.pumpAndSettle();

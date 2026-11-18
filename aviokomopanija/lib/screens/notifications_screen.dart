@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/notification_service.dart';
+import '../services/auth_service.dart';
 import 'booking_screens.dart';
 
 class NotificationBell extends StatefulWidget {
@@ -17,10 +18,14 @@ class _NotificationBellState extends State<NotificationBell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) NotificationService.instance.refreshReminders();
+      if (mounted && AuthService.currentUser != null) {
+        NotificationService.instance.refreshReminders();
+      }
     });
     timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      NotificationService.instance.refreshReminders();
+      if (AuthService.currentUser != null) {
+        NotificationService.instance.refreshReminders();
+      }
     });
   }
 
@@ -33,17 +38,19 @@ class _NotificationBellState extends State<NotificationBell> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: NotificationService.instance,
-    builder: (context, _) => IconButton(
-      tooltip: 'Obaveštenja',
-      style: IconButton.styleFrom(backgroundColor: Colors.white),
-      onPressed: () => open(context, const NotificationsScreen()),
-      icon: Badge(
-        key: const ValueKey('notification-badge'),
-        isLabelVisible: NotificationService.instance.hasUnread,
-        backgroundColor: const Color(0xFFE66B65),
-        child: const Icon(Icons.notifications_none_rounded, color: green),
-      ),
-    ),
+    builder: (context, _) => AuthService.currentUser == null
+        ? const SizedBox.shrink()
+        : IconButton(
+            tooltip: 'Obaveštenja',
+            style: IconButton.styleFrom(backgroundColor: Colors.white),
+            onPressed: () => open(context, const NotificationsScreen()),
+            icon: Badge(
+              key: const ValueKey('notification-badge'),
+              isLabelVisible: NotificationService.instance.hasUnread,
+              backgroundColor: const Color(0xFFE66B65),
+              child: const Icon(Icons.notifications_none_rounded, color: green),
+            ),
+          ),
   );
 }
 
