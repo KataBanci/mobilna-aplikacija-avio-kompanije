@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:aviokomopanija/consts/app_colors.dart';
 import 'package:aviokomopanija/screens/home_screen.dart';
-import 'package:aviokomopanija/screens/login_screen.dart';
-import 'package:aviokomopanija/screens/register_screen.dart';
+import 'package:aviokomopanija/screens/auth/login.dart';
+import 'package:aviokomopanija/screens/auth/register.dart';
 import 'package:aviokomopanija/services/auth_service.dart';
 
 class WelcomeScreen extends StatelessWidget {

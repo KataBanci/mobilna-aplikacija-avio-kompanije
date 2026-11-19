@@ -39,6 +39,7 @@ Widget destinationImage(String path) {
 }
 
 class CitiesScreen extends StatelessWidget {
+  static const routeName = '/destinations';
   const CitiesScreen({super.key});
 
   @override

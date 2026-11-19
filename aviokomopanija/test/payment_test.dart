@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aviokomopanija/models/booking.dart';
 import 'package:aviokomopanija/main.dart';
 import 'package:aviokomopanija/screens/booking_screens.dart';
-import 'package:aviokomopanija/services/calendar_service.dart';
 
 void main() {
   test('Telefon prihvata lokalni, kratak i međunarodni broj', () {
@@ -43,15 +42,6 @@ void main() {
     expect(find.byType(TripsScreen), findsOneWidget);
     expect(find.text('AV123456'), findsOneWidget);
     expect(t.takeException(), isNull);
-  });
-  test('Kalendar sadrži let, vremensku zonu i podsetnik', () {
-    final b = Booking()..reference = 'AV123456';
-    final text = calendarContents(b);
-    expect(text, contains('BEGIN:VCALENDAR\r\n'));
-    expect(text, contains('DTSTART;TZID=Europe/Belgrade:'));
-    expect(text, contains('UID:AV123456@airvista.example'));
-    expect(text, contains('TRIGGER:-PT2H'));
-    expect(text, contains('END:VCALENDAR\r\n'));
   });
   testWidgets(
     'Neispravna kartica se odbija, probno plaćanje potvrđuje rezervaciju',

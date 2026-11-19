@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'login_screen.dart';
-import 'register_screen.dart';
+import 'auth/login.dart';
+import 'auth/register.dart';
 
 class GuestSignIn extends StatelessWidget {
   final String message;
